@@ -1,0 +1,39 @@
+{
+	"schemaVersion": 1,
+	"id": "shieldsync",
+	"version": "${version}",
+	"name": "ShieldSync",
+	"description": "This is a mod that fixes inconsistencies in shield blocking and timings.",
+	"authors": [
+		"ResoluteStudios",
+		"PieR4y"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "Apache-2.0",
+	"icon": "assets/shieldsync/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"resolutestudios.shieldsync.Shieldsync"
+		],
+		"client": [
+			"resolutestudios.shieldsync.client.ShieldsyncClient"
+		]
+	},
+	"mixins": [
+		"shieldsync.mixins.json",
+		{
+			"config": "shieldsync.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.2",
+		"minecraft": "~1.21.11",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}
