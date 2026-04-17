@@ -1,0 +1,79 @@
+name: Release on Version Bump
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  check-version-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check for Version Update
+        id: check_version
+        run: |
+          # Get current version
+          CURRENT_VERSION=$(grep 'mod_version=' gradle.properties | cut -d'=' -f2)
+          echo "Current Version: $CURRENT_VERSION"
+          
+          # Get previous version from HEAD~1
+          git show HEAD~1:gradle.properties > old_gradle.properties || true
+          if [ -f old_gradle.properties ]; then
+            PREV_VERSION=$(grep 'mod_version=' old_gradle.properties | cut -d'=' -f2)
+          else
+            PREV_VERSION=""
+          fi
+          echo "Previous Version: $PREV_VERSION"
+          
+          if [ "$CURRENT_VERSION" != "$PREV_VERSION" ] && [ -n "$CURRENT_VERSION" ]; then
+            echo "Version bumped from $PREV_VERSION to $CURRENT_VERSION. Proceeding with release."
+            echo "VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
+            echo "CHANGED=true" >> $GITHUB_ENV
+          else
+            echo "No version bump detected."
+            echo "CHANGED=false" >> $GITHUB_ENV
+          fi
+
+      - name: Extract Changelog
+        if: env.CHANGED == 'true'
+        id: get_changelog
+        run: |
+          # Use commit messages as changelog
+          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
+          git log -1 --pretty=format:"%B" >> $GITHUB_ENV
+          echo "" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Set up JDK 21
+        if: env.CHANGED == 'true'
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          
+      - name: Build with Gradle
+        if: env.CHANGED == 'true'
+        run: ./gradlew build
+
+      - name: Create GitHub Release
+        if: env.CHANGED == 'true'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ env.VERSION }}
+          name: "${{ env.VERSION }} ShieldSync Update"
+          body: |
+            Automated Release for version ${{ env.VERSION }}.
+            
+            ### Changelog
+            ${{ env.CHANGELOG }}
+          files: build/libs/*.jar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

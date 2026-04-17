@@ -3,7 +3,9 @@
 	"package": "resolutestudios.shieldsync.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-		"ExampleMixin"
+		"AxeShieldFixMixin",
+		"ServerDetectionInconsistencyMixin",
+		"ShieldPingCompensationMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

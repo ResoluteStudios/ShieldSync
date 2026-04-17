@@ -1,0 +1,76 @@
+plugins {
+	id 'fabric-loom' version '1.7-SNAPSHOT'
+	id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+	archivesName = project.archives_base_name
+}
+
+repositories {
+	maven { url = "https://maven.fabricmc.net/" }
+	maven {
+		name = 'LuckPerms'
+		url = 'https://repo.luckperms.net/'
+	}
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+	modImplementation "net.fabricmc.fabric-api:fabric-api:0.104.0+1.21.1"
+
+	modImplementation "me.lucko:fabric-permissions-api:0.3.1"
+
+	// LuckPerms for admin node checks
+	compileOnly 'net.luckperms:api:5.4'
+}
+
+processResources {
+	inputs.property "version", project.version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": project.version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 21
+}
+
+java {
+	withSourcesJar()
+
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
+}
+
+import java.util.Properties
+
+task bumpVersion {
+    doLast {
+        def propsFile = file('gradle.properties')
+        def props = new Properties()
+        props.load(propsFile.newDataInputStream())
+        
+        def currentVersion = props.getProperty('mod_version')
+        def parts = currentVersion.split('\\.')
+        if (parts.length >= 3) {
+            def patch = Integer.parseInt(parts[2]) + 1
+            def newVersion = "${parts[0]}.${parts[1]}.${patch}"
+            props.setProperty('mod_version', newVersion)
+            props.store(propsFile.newWriter(), null)
+            println "Bumped version to $newVersion"
+        } else {
+            println "Could not parse version: $currentVersion"
+        }
+    }
+}
+
+
+
